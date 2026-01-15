@@ -1,0 +1,111 @@
+# BeeAPI Server First
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: beeapi-first
+  namespace: algohive
+  labels:
+    app: beeapi-first
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: beeapi-first
+  template:
+    metadata:
+      labels:
+        app: beeapi-first
+    spec:
+      containers:
+      - name: beeapi
+        image: ghcr.io/algohive-coding-puzzles/beeapi-go:latest
+        ports:
+        - containerPort: 5000
+        env:
+        - name: TZ
+          value: "Europe/Paris"
+        envFrom:
+        - configMapRef:
+            name: beeapi-first-config
+        volumeMounts:
+        - name: puzzles
+          mountPath: /app/puzzles
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+      volumes:
+      - name: puzzles
+        persistentVolumeClaim:
+          claimName: puzzles-first-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: beeapi-first
+  namespace: algohive
+spec:
+  selector:
+    app: beeapi-first
+  ports:
+  - port: 5000
+    targetPort: 5000
+---
+# BeeAPI Server Second
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: beeapi-second
+  namespace: algohive
+  labels:
+    app: beeapi-second
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: beeapi-second
+  template:
+    metadata:
+      labels:
+        app: beeapi-second
+    spec:
+      containers:
+      - name: beeapi
+        image: ghcr.io/algohive-coding-puzzles/beeapi-go:latest
+        ports:
+        - containerPort: 5000
+        env:
+        - name: TZ
+          value: "Europe/Paris"
+        envFrom:
+        - configMapRef:
+            name: beeapi-second-config
+        volumeMounts:
+        - name: puzzles
+          mountPath: /app/puzzles
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+      volumes:
+      - name: puzzles
+        persistentVolumeClaim:
+          claimName: puzzles-second-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: beeapi-second
+  namespace: algohive
+spec:
+  selector:
+    app: beeapi-second
+  ports:
+  - port: 5000
+    targetPort: 5000

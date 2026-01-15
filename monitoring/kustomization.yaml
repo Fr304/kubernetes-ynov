@@ -1,0 +1,13 @@
+# Kustomization pour Grafana (monitoring)
+# Usage: kubectl apply -k monitoring/
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: monitoring
+
+resources:
+  - grafana-serviceaccount.yaml
+  - grafana-secrets.yaml
+  - grafana-configmaps.yaml
+  - grafana-deployment.yaml
+  - grafana-service.yaml

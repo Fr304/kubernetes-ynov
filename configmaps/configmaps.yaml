@@ -1,0 +1,82 @@
+# ConfigMap pour algohive-server
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: algohive-server-config
+  namespace: algohive
+data:
+  POSTGRES_HOST: "algohive-db"
+  POSTGRES_PORT: "5432"
+  JWT_EXPIRATION: "86400"
+  API_PORT: "8080"
+  ENV: "production"
+  ALLOWED_ORIGINS: "*"
+  DEFAULT_PASSWORD: "algohive"
+  BEE_APIS: "http://beeapi-first:5000,http://beeapi-second:5000"
+  CLIENT_URL: "http://localhost"
+  MAIL_PORT: "587"
+  MAIL_HOST: "smtp.admin.com"
+  MAIL_USERNAME: "admin.admin@admin.com"
+  CACHE_TTL: "86400"
+  CACHE_HOST: "algohive-cache"
+  CACHE_PASSWORD: ""
+  CACHE_DB: "0"
+  CACHE_PORT: "6379"
+  CACHE_EXPI_MIN: "30"
+---
+# ConfigMap pour BeeHub
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: beehub-config
+  namespace: algohive
+data:
+  DATABASE_URL: "sqlite:///./db/beehub.db"
+  ACCESS_TOKEN_EXPIRE_MINUTES: "1440"
+  APP_PORT: "8081"
+  DISCOVERY_ENABLED: "true"
+  DISCOVERY_URLS: "http://beeapi-first:5000,http://beeapi-second:5000"
+---
+# ConfigMap pour BeeAPI First
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: beeapi-first-config
+  namespace: algohive
+data:
+  SERVER_NAME: "BeeAPI-First"
+  SERVER_DESCRIPTION: "Server containing puzzles for the first scope"
+---
+# ConfigMap pour BeeAPI Second
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: beeapi-second-config
+  namespace: algohive
+data:
+  SERVER_NAME: "BeeAPI-Second"
+  SERVER_DESCRIPTION: "Server containing puzzles for the second scope"
+---
+# ConfigMap pour Prometheus
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: algohive
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+    scrape_configs:
+      - job_name: 'prometheus'
+        static_configs:
+          - targets: ['localhost:9090']
+      - job_name: 'algohive-server'
+        static_configs:
+          - targets: ['algohive-server:8080']
+      - job_name: 'beeapi-first'
+        static_configs:
+          - targets: ['beeapi-first:5000']
+      - job_name: 'beeapi-second'
+        static_configs:
+          - targets: ['beeapi-second:5000']

@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: algohive
+  labels:
+    app.kubernetes.io/name: algohive
+    app.kubernetes.io/part-of: algohive-platform

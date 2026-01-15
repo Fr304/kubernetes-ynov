@@ -1,0 +1,33 @@
+# Kustomization pour déployer AlgoHive
+# Usage: kubectl apply -k .
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: algohive
+
+resources:
+  # Namespace (premier)
+  - base/namespace.yaml
+  # Secrets et ConfigMaps
+  - secrets/secrets.yaml
+  - configmaps/configmaps.yaml
+  # Volumes
+  - volumes/pvcs.yaml
+  # Deployments (ordre des dépendances)
+  - deployments/01-postgres.yaml
+  - deployments/02-redis.yaml
+  - deployments/03-beeapi.yaml
+  - deployments/04-beehub.yaml
+  - deployments/05-algohive-server.yaml
+  - deployments/06-algohive-client.yaml
+  - deployments/07-monitoring.yaml
+  # Services
+  - services/ingress.yaml
+  # Network Policies (optionnel)
+  # - services/network-policies.yaml
+
+  # KubeView
+  - kubeview/
+
+  # Monitoring (Grafana)
+  - monitoring/

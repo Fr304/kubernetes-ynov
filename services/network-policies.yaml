@@ -1,0 +1,44 @@
+# Network Policies pour sécuriser le trafic
+# Décommentez et appliquez selon vos besoins
+
+# Autoriser le trafic vers PostgreSQL uniquement depuis algohive-server
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: postgres-policy
+  namespace: algohive
+spec:
+  podSelector:
+    matchLabels:
+      app: algohive-db
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: algohive-server
+    ports:
+    - protocol: TCP
+      port: 5432
+---
+# Autoriser le trafic vers Redis uniquement depuis algohive-server
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: redis-policy
+  namespace: algohive
+spec:
+  podSelector:
+    matchLabels:
+      app: algohive-cache
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: algohive-server
+    ports:
+    - protocol: TCP
+      port: 6379

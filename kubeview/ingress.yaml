@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  labels:
+    app.kubernetes.io/instance: kubeview
+    app.kubernetes.io/name: kubeview
+  name: kubeview
+  namespace: kubeview
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: kubeview.algohive.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: kubeview
+                port:
+                  number: 8000

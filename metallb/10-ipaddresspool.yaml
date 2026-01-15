@@ -1,0 +1,23 @@
+# =============================================================================
+# MetalLB IPAddressPool
+# =============================================================================
+# Définit la plage d'adresses IP disponibles pour les services LoadBalancer.
+#
+# Configuration actuelle du cluster:
+# - Nom: first-pool
+# - Plage: 192.168.1.100 - 192.168.1.105 (6 IPs disponibles)
+# - autoAssign: true (les IPs sont assignées automatiquement)
+#
+# IMPORTANT: Assurez-vous que ces IPs ne sont pas utilisées par d'autres
+# équipements sur votre réseau (DHCP, machines physiques, etc.)
+# =============================================================================
+
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: first-pool
+  namespace: metallb-system
+spec:
+  addresses:
+    - 192.168.1.100-192.168.1.105
+  autoAssign: true

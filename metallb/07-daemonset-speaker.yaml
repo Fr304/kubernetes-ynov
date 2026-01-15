@@ -1,0 +1,125 @@
+# =============================================================================
+# MetalLB Speaker DaemonSet
+# =============================================================================
+# Les Speakers sont déployés sur chaque node et sont responsables de :
+# - Annoncer les IPs LoadBalancer sur le réseau (via ARP en mode L2)
+# - Répondre aux requêtes ARP pour les IPs virtuelles
+# - Communiquer entre eux via memberlist pour l'élection du leader
+#
+# Le Speaker utilise hostNetwork pour pouvoir envoyer/recevoir des paquets
+# ARP directement sur le réseau physique.
+#
+# La capability NET_RAW est nécessaire pour manipuler les paquets réseau.
+# =============================================================================
+
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: speaker
+  namespace: metallb-system
+  labels:
+    app: metallb
+    component: speaker
+spec:
+  selector:
+    matchLabels:
+      app: metallb
+      component: speaker
+  template:
+    metadata:
+      labels:
+        app: metallb
+        component: speaker
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "7472"
+    spec:
+      serviceAccountName: speaker
+      terminationGracePeriodSeconds: 2
+      hostNetwork: true
+      nodeSelector:
+        kubernetes.io/os: linux
+      tolerations:
+        - key: node-role.kubernetes.io/master
+          operator: Exists
+          effect: NoSchedule
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: speaker
+          image: quay.io/metallb/speaker:v0.15.3
+          args:
+            - --port=7472
+            - --log-level=info
+          env:
+            - name: METALLB_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: METALLB_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: METALLB_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: METALLB_ML_BIND_ADDR
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: METALLB_ML_LABELS
+              value: "app=metallb,component=speaker"
+            - name: METALLB_ML_SECRET_KEY_PATH
+              value: "/etc/ml_secret_key"
+          ports:
+            - name: monitoring
+              containerPort: 7472
+              protocol: TCP
+            - name: memberlist-tcp
+              containerPort: 7946
+              protocol: TCP
+            - name: memberlist-udp
+              containerPort: 7946
+              protocol: UDP
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: monitoring
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 1
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: monitoring
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 1
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - NET_RAW
+          volumeMounts:
+            - name: memberlist
+              mountPath: /etc/ml_secret_key
+              readOnly: true
+            - name: metallb-excludel2
+              mountPath: /etc/metallb
+              readOnly: true
+      volumes:
+        - name: memberlist
+          secret:
+            secretName: memberlist
+            defaultMode: 420
+        - name: metallb-excludel2
+          configMap:
+            name: metallb-excludel2
+            defaultMode: 256

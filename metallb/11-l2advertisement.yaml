@@ -1,0 +1,26 @@
+# =============================================================================
+# MetalLB L2Advertisement
+# =============================================================================
+# Configure l'annonce des IPs en mode Layer 2 (ARP).
+#
+# En mode L2, MetalLB répond aux requêtes ARP pour les IPs virtuelles.
+# Un seul node "gagne" l'élection et répond aux requêtes ARP pour chaque IP.
+# Si ce node tombe, un autre node prend le relais automatiquement.
+#
+# Avantages du mode L2:
+# - Simple à configurer (pas besoin de router BGP)
+# - Fonctionne sur n'importe quel réseau
+#
+# Limitations:
+# - Une seule machine reçoit tout le trafic pour une IP donnée
+# - Failover peut prendre quelques secondes (renouvellement ARP)
+# =============================================================================
+
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: l2-advert
+  namespace: metallb-system
+spec:
+  ipAddressPools:
+    - first-pool

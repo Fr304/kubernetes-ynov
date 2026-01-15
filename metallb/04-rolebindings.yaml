@@ -1,0 +1,69 @@
+# =============================================================================
+# MetalLB Role Bindings
+# =============================================================================
+# Ces bindings lient les ServiceAccounts aux Roles et ClusterRoles.
+# =============================================================================
+
+# ClusterRoleBindings (niveau cluster)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: metallb-system:controller
+  labels:
+    app: metallb
+subjects:
+  - kind: ServiceAccount
+    name: controller
+    namespace: metallb-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: metallb-system:controller
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: metallb-system:speaker
+  labels:
+    app: metallb
+subjects:
+  - kind: ServiceAccount
+    name: speaker
+    namespace: metallb-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: metallb-system:speaker
+---
+# RoleBindings (niveau namespace)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: controller
+  namespace: metallb-system
+  labels:
+    app: metallb
+subjects:
+  - kind: ServiceAccount
+    name: controller
+    namespace: metallb-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: controller
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: pod-lister
+  namespace: metallb-system
+  labels:
+    app: metallb
+subjects:
+  - kind: ServiceAccount
+    name: speaker
+    namespace: metallb-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: pod-lister

@@ -1,0 +1,21 @@
+# =============================================================================
+# MetalLB Webhook Service
+# =============================================================================
+# Ce service expose le webhook de validation du controller.
+# Il est utilisé par Kubernetes pour valider les ressources MetalLB
+# (IPAddressPool, L2Advertisement, BGPPeer, etc.) avant leur création.
+# =============================================================================
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: metallb-webhook-service
+  namespace: metallb-system
+spec:
+  type: ClusterIP
+  selector:
+    component: controller
+  ports:
+    - port: 443
+      targetPort: 9443
+      protocol: TCP

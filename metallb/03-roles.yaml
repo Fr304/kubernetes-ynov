@@ -1,0 +1,91 @@
+# =============================================================================
+# MetalLB Roles (Namespace-scoped)
+# =============================================================================
+# Ces Roles définissent les permissions au niveau du namespace metallb-system.
+#
+# - controller: Gère les secrets (notamment memberlist pour la communication
+#   entre speakers), et lit les ressources MetalLB (IPAddressPools, etc.)
+#
+# - pod-lister: Permet aux speakers de lister les pods et lire les
+#   configurations MetalLB pour annoncer correctement les IPs.
+# =============================================================================
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: controller
+  namespace: metallb-system
+  labels:
+    app: metallb
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames: ["memberlist"]
+    verbs: ["list"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    resourceNames: ["controller"]
+    verbs: ["get"]
+  - apiGroups: ["metallb.io"]
+    resources: ["bgppeers"]
+    verbs: ["get", "list"]
+  - apiGroups: ["metallb.io"]
+    resources: ["bfdprofiles"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["metallb.io"]
+    resources: ["ipaddresspools"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["metallb.io"]
+    resources: ["ipaddresspools/status"]
+    verbs: ["update"]
+  - apiGroups: ["metallb.io"]
+    resources: ["bgpadvertisements"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["metallb.io"]
+    resources: ["l2advertisements"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["metallb.io"]
+    resources: ["communities"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pod-lister
+  namespace: metallb-system
+  labels:
+    app: metallb
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["list", "get"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["metallb.io"]
+    resources: ["bfdprofiles"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["metallb.io"]
+    resources: ["bgppeers"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["metallb.io"]
+    resources: ["l2advertisements"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["metallb.io"]
+    resources: ["bgpadvertisements"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["metallb.io"]
+    resources: ["ipaddresspools"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["metallb.io"]
+    resources: ["communities"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["metallb.io"]
+    resources: ["servicebgpstatuses", "servicebgpstatuses/status"]
+    verbs: ["*"]

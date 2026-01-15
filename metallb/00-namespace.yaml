@@ -1,0 +1,16 @@
+# =============================================================================
+# MetalLB Namespace
+# =============================================================================
+# Ce fichier crée le namespace dédié pour MetalLB.
+# Tous les composants MetalLB seront déployés dans ce namespace.
+# =============================================================================
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: metallb-system
+  labels:
+    app: metallb
+    pod-security.kubernetes.io/enforce: privileged
+    pod-security.kubernetes.io/audit: privileged
+    pod-security.kubernetes.io/warn: privileged

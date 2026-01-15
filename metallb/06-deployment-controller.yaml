@@ -1,0 +1,95 @@
+# =============================================================================
+# MetalLB Controller Deployment
+# =============================================================================
+# Le Controller est le composant central de MetalLB qui :
+# - Surveille les services de type LoadBalancer
+# - Assigne les adresses IP depuis les IPAddressPools
+# - Met à jour le status des services avec l'IP externe
+# - Gère les webhooks de validation
+#
+# Un seul replica est nécessaire car le controller est stateless et utilise
+# les CRDs pour stocker l'état.
+# =============================================================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: controller
+  namespace: metallb-system
+  labels:
+    app: metallb
+    component: controller
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: metallb
+      component: controller
+  template:
+    metadata:
+      labels:
+        app: metallb
+        component: controller
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "7472"
+    spec:
+      serviceAccountName: controller
+      terminationGracePeriodSeconds: 0
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        fsGroup: 65534
+      nodeSelector:
+        kubernetes.io/os: linux
+      containers:
+        - name: controller
+          image: quay.io/metallb/controller:v0.15.3
+          args:
+            - --port=7472
+            - --log-level=info
+            - --tls-min-version=VersionTLS12
+          env:
+            - name: METALLB_ML_SECRET_NAME
+              value: memberlist
+            - name: METALLB_DEPLOYMENT
+              value: controller
+          ports:
+            - name: monitoring
+              containerPort: 7472
+              protocol: TCP
+            - name: webhook-server
+              containerPort: 9443
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: monitoring
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 1
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: monitoring
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 1
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - all
+          volumeMounts:
+            - name: cert
+              mountPath: /tmp/k8s-webhook-server/serving-certs
+              readOnly: true
+      volumes:
+        - name: cert
+          secret:
+            secretName: metallb-webhook-cert
+            defaultMode: 420

@@ -1,63 +1,121 @@
 # AlgoHive - Kubernetes
 
-Manifests Kubernetes pour déployer l'application AlgoHive.
+Manifests Kubernetes pour déployer l'application AlgoHive sur un cluster bare-metal (kubeadm).
+
+## Prérequis
+
+- Cluster Kubernetes (kubeadm) fonctionnel
+- kubectl configuré
+- CNI installé (Calico, Flannel, etc.)
 
 ## Structure
 
 ```
 algohive-k8s/
-├── base/           # Namespace (espace isolé)
-├── secrets/        # Données sensibles (mots de passe)
-├── configmaps/     # Configurations applicatives
-├── volumes/        # Stockage persistant (PVC)
-├── deployments/    # Applications (pods)
-├── services/       # Ingress et Network Policies
-├── kubeview/       # Visualisation du cluster
-├── monitoring/     # Grafana (dashboards)
-└── kustomization.yaml
+├── metallb/           # Load Balancer bare-metal (IPs externes)
+├── ingress-nginx/     # Ingress Controller (routage HTTP/HTTPS)
+├── base/              # Namespace algohive
+├── secrets/           # Données sensibles (mots de passe)
+├── configmaps/        # Configurations applicatives
+├── volumes/           # Stockage persistant (PVC)
+├── deployments/       # Applications (pods)
+├── services/          # Ingress rules et Network Policies
+├── monitoring/        # Grafana (dashboards)
+├── kubeview/          # Visualisation du cluster
+├── install-all.sh     # Script de déploiement complet
+├── deploy.sh          # Script de gestion
+└── INSTALL.md         # Guide détaillé d'installation
 ```
 
-## Déploiement
+---
 
-### Option 1 : Script automatique
+## Déploiement Rapide
+
+### Installation complète (recommandé)
 
 ```bash
-./deploy.sh install   # Déployer
-./deploy.sh status    # Voir l'état
+# Exécuter le script d'installation
+./install-all.sh
+```
+
+Ce script installe dans l'ordre :
+1. MetalLB (Load Balancer)
+2. Ingress NGINX (routage HTTP)
+3. Application Algohive
+
+### Installation manuelle
+
+Voir [INSTALL.md](INSTALL.md) pour le guide détaillé.
+
+---
+
+## Gestion de l'Application
+
+```bash
+./deploy.sh install   # Déployer l'application
+./deploy.sh status    # Voir l'état des pods/services
 ./deploy.sh logs      # Voir les logs
-./deploy.sh urls      # Afficher les URLs
-./deploy.sh delete    # Supprimer
+./deploy.sh urls      # Afficher les URLs d'accès
+./deploy.sh restart   # Redémarrer un service
+./deploy.sh delete    # Supprimer l'application
 ```
 
-### Option 2 : Kustomize (tout d'un coup)
+---
 
-```bash
-kubectl apply -k .
+## Architecture
+
+```
+                    Internet / Réseau Local
+                              │
+                              ▼
+                    ┌──────────────────┐
+                    │     MetalLB      │
+                    │  192.168.1.100   │
+                    └──────────────────┘
+                              │
+                              ▼
+                    ┌──────────────────┐
+                    │  Ingress NGINX   │
+                    │   (HTTP/HTTPS)   │
+                    └──────────────────┘
+                              │
+        ┌─────────────────────┼─────────────────────┐
+        ▼                     ▼                     ▼
+┌───────────────┐   ┌───────────────┐   ┌───────────────┐
+│algohive.local │   │api.algohive   │   │grafana.local  │
+│   (Frontend)  │   │   (Backend)   │   │  (Monitoring) │
+└───────────────┘   └───────────────┘   └───────────────┘
+                              │
+                    ┌─────────┴─────────┐
+                    ▼                   ▼
+              ┌──────────┐        ┌──────────┐
+              │PostgreSQL│        │  Redis   │
+              └──────────┘        └──────────┘
 ```
 
-### Option 3 : Dossier par dossier
-
-```bash
-kubectl apply -f base/
-kubectl apply -f secrets/
-kubectl apply -f configmaps/
-kubectl apply -f volumes/
-kubectl apply -f deployments/
-kubectl apply -f services/
-kubectl apply -k kubeview/
-kubectl apply -k monitoring/
-```
+---
 
 ## URLs d'accès
+
+Après déploiement, ajoutez dans `/etc/hosts` :
+
+```
+192.168.1.100  algohive.local
+192.168.1.100  api.algohive.local
+192.168.1.100  beehub.algohive.local
+192.168.1.100  grafana.algohive.local
+192.168.1.100  kubeview.algohive.local
+```
 
 | Service | URL |
 |---------|-----|
 | Frontend | http://algohive.local |
 | API | http://api.algohive.local |
-| KubeView | http://kubeview.algohive.local |
+| BeeHub | http://beehub.algohive.local |
 | Grafana | http://grafana.algohive.local |
+| KubeView | http://kubeview.algohive.local |
 
-## Ports NodePort (fallback)
+### Ports NodePort (fallback sans Ingress)
 
 | Service | Port |
 |---------|------|
@@ -67,28 +125,75 @@ kubectl apply -k monitoring/
 | Prometheus | 30090 |
 | Grafana | 30030 |
 
-## Commandes de debug
+---
+
+## Commandes Utiles
 
 ```bash
 # Voir tous les pods
+kubectl get pods -A
+
+# Pods de l'application
 kubectl get pods -n algohive
 
 # Logs d'un pod
-kubectl logs -n algohive <nom-du-pod>
-
-# Logs en temps réel
 kubectl logs -n algohive <nom-du-pod> -f
 
 # Shell dans un pod
 kubectl exec -it -n algohive <nom-du-pod> -- /bin/sh
 
-# Événements et erreurs
-kubectl describe pod -n algohive <nom-du-pod>
+# Voir les services LoadBalancer
+kubectl get svc -A | grep LoadBalancer
 
-# Voir les ressources d'un namespace
-kubectl get all -n algohive
+# Voir les Ingress
+kubectl get ingress -A
+
+# Événements récents
+kubectl get events -n algohive --sort-by='.lastTimestamp'
 ```
 
-## Dossiers
+---
 
-Voir le `README.md` dans chaque dossier pour les détails.
+## Composants
+
+| Dossier | Description | Documentation |
+|---------|-------------|---------------|
+| `metallb/` | Load Balancer Layer 2 pour IPs externes | [README](metallb/README.md) |
+| `ingress-nginx/` | Controller Ingress NGINX | [README](ingress-nginx/README.md) |
+| `base/` | Namespace algohive | - |
+| `secrets/` | Mots de passe base de données | - |
+| `configmaps/` | Configuration applicative | - |
+| `volumes/` | PersistentVolumeClaims | - |
+| `deployments/` | Pods applicatifs | - |
+| `services/` | Ingress rules + NetworkPolicies | - |
+| `monitoring/` | Stack Grafana | - |
+| `kubeview/` | Visualisation cluster | - |
+
+---
+
+## Dépannage
+
+### Service en Pending (pas d'IP externe)
+
+```bash
+# Vérifier MetalLB
+kubectl get pods -n metallb-system
+kubectl logs -n metallb-system -l component=controller
+```
+
+### 502 Bad Gateway
+
+```bash
+# Vérifier que le backend tourne
+kubectl get pods -n algohive
+kubectl get endpoints -n algohive
+```
+
+### Pods en CrashLoopBackOff
+
+```bash
+kubectl logs -n algohive <pod-name>
+kubectl describe pod -n algohive <pod-name>
+```
+
+Voir [INSTALL.md](INSTALL.md) pour plus de détails sur le dépannage.

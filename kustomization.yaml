@@ -31,3 +31,7 @@ resources:
 
   # Monitoring (Grafana)
   - monitoring/
+
+  # MetalLB (Load Balancer)
+  # Note: MetalLB doit être installé séparément, voir metallb/README.md
+  # - metallb/metallb.yaml

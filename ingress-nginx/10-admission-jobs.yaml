@@ -1,0 +1,119 @@
+# =============================================================================
+# Ingress NGINX Admission Jobs
+# =============================================================================
+# Ces jobs one-shot configurent les certificats pour le webhook de validation.
+#
+# 1. ingress-nginx-admission-create:
+#    - Génère un certificat auto-signé
+#    - Stocke le certificat dans le secret "ingress-nginx-admission"
+#
+# 2. ingress-nginx-admission-patch:
+#    - Patch la ValidatingWebhookConfiguration avec le caBundle
+#    - Permet à l'API Server de faire confiance au webhook
+#
+# Ces jobs ne s'exécutent qu'une seule fois lors de l'installation.
+# =============================================================================
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ingress-nginx-admission-create
+  namespace: ingress-nginx
+  labels:
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/instance: ingress-nginx
+    app.kubernetes.io/component: admission-webhook
+    app.kubernetes.io/part-of: ingress-nginx
+    app.kubernetes.io/version: "1.11.1"
+spec:
+  template:
+    metadata:
+      name: ingress-nginx-admission-create
+      labels:
+        app.kubernetes.io/name: ingress-nginx
+        app.kubernetes.io/instance: ingress-nginx
+        app.kubernetes.io/component: admission-webhook
+        app.kubernetes.io/part-of: ingress-nginx
+        app.kubernetes.io/version: "1.11.1"
+    spec:
+      serviceAccountName: ingress-nginx-admission
+      restartPolicy: OnFailure
+      nodeSelector:
+        kubernetes.io/os: linux
+      containers:
+        - name: create
+          image: registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.4.1@sha256:36d05b4077fb8e3d13663702fa337f124675ba8667cbd949c03a8e8ea6fa4366
+          imagePullPolicy: IfNotPresent
+          args:
+            - create
+            - --host=ingress-nginx-controller-admission,ingress-nginx-controller-admission.$(POD_NAMESPACE).svc
+            - --namespace=$(POD_NAMESPACE)
+            - --secret-name=ingress-nginx-admission
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          securityContext:
+            runAsUser: 65532
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            seccompProfile:
+              type: RuntimeDefault
+            capabilities:
+              drop:
+                - ALL
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ingress-nginx-admission-patch
+  namespace: ingress-nginx
+  labels:
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/instance: ingress-nginx
+    app.kubernetes.io/component: admission-webhook
+    app.kubernetes.io/part-of: ingress-nginx
+    app.kubernetes.io/version: "1.11.1"
+spec:
+  template:
+    metadata:
+      name: ingress-nginx-admission-patch
+      labels:
+        app.kubernetes.io/name: ingress-nginx
+        app.kubernetes.io/instance: ingress-nginx
+        app.kubernetes.io/component: admission-webhook
+        app.kubernetes.io/part-of: ingress-nginx
+        app.kubernetes.io/version: "1.11.1"
+    spec:
+      serviceAccountName: ingress-nginx-admission
+      restartPolicy: OnFailure
+      nodeSelector:
+        kubernetes.io/os: linux
+      containers:
+        - name: patch
+          image: registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.4.1@sha256:36d05b4077fb8e3d13663702fa337f124675ba8667cbd949c03a8e8ea6fa4366
+          imagePullPolicy: IfNotPresent
+          args:
+            - patch
+            - --webhook-name=ingress-nginx-admission
+            - --namespace=$(POD_NAMESPACE)
+            - --patch-mutating=false
+            - --secret-name=ingress-nginx-admission
+            - --patch-failure-policy=Fail
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          securityContext:
+            runAsUser: 65532
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            seccompProfile:
+              type: RuntimeDefault
+            capabilities:
+              drop:
+                - ALL

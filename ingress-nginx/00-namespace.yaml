@@ -1,0 +1,14 @@
+# =============================================================================
+# Ingress NGINX Namespace
+# =============================================================================
+# Ce fichier crée le namespace dédié pour l'Ingress Controller NGINX.
+# Tous les composants seront déployés dans ce namespace.
+# =============================================================================
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ingress-nginx
+  labels:
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/instance: ingress-nginx

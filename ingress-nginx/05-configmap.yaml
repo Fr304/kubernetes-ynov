@@ -1,0 +1,39 @@
+# =============================================================================
+# Ingress NGINX ConfigMap
+# =============================================================================
+# Configuration du controller NGINX. Cette ConfigMap permet de personnaliser
+# le comportement de NGINX sans modifier le deployment.
+#
+# Options courantes:
+# - proxy-body-size: Taille max des requêtes (défaut: 1m)
+# - proxy-read-timeout: Timeout de lecture (défaut: 60s)
+# - use-forwarded-headers: Utiliser les headers X-Forwarded-*
+# - ssl-protocols: Protocoles TLS autorisés
+#
+# Documentation: https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/
+# =============================================================================
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ingress-nginx-controller
+  namespace: ingress-nginx
+  labels:
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/instance: ingress-nginx
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/part-of: ingress-nginx
+    app.kubernetes.io/version: "1.11.1"
+data:
+  # Désactive les annotations snippet pour des raisons de sécurité
+  allow-snippet-annotations: "false"
+
+  # Options supplémentaires (décommentez selon vos besoins):
+  # proxy-body-size: "50m"
+  # proxy-read-timeout: "120"
+  # proxy-send-timeout: "120"
+  # use-forwarded-headers: "true"
+  # compute-full-forwarded-for: "true"
+  # use-proxy-protocol: "false"
+  # ssl-protocols: "TLSv1.2 TLSv1.3"
+  # ssl-ciphers: "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256"

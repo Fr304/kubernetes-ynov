@@ -1,0 +1,176 @@
+# =============================================================================
+# OpenEBS - Deployments
+# - openebs-localpv-provisioner : provisionne les PV hostpath/device
+# - openebs-ndm-operator        : opérateur Node Disk Manager
+# - openebs-ndm-cluster-exporter: métriques Prometheus cluster
+# =============================================================================
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openebs-localpv-provisioner
+  namespace: openebs
+  labels:
+    name: openebs-localpv-provisioner
+    openebs.io/component-name: openebs-localpv-provisioner
+    openebs.io/version: 3.5.0
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: openebs-localpv-provisioner
+      openebs.io/component-name: openebs-localpv-provisioner
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        name: openebs-localpv-provisioner
+        openebs.io/component-name: openebs-localpv-provisioner
+        openebs.io/version: 3.5.0
+    spec:
+      serviceAccountName: openebs-maya-operator
+      containers:
+      - name: openebs-provisioner-hostpath
+        image: openebs/provisioner-localpv:3.4.0
+        imagePullPolicy: IfNotPresent
+        args:
+        - --bd-time-out=$(BDC_BD_BIND_RETRIES)
+        env:
+        - name: BDC_BD_BIND_RETRIES
+          value: "12"
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: OPENEBS_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: OPENEBS_SERVICE_ACCOUNT
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.serviceAccountName
+        - name: OPENEBS_IO_ENABLE_ANALYTICS
+          value: "true"
+        - name: OPENEBS_IO_INSTALLER_TYPE
+          value: openebs-operator
+        - name: OPENEBS_IO_HELPER_IMAGE
+          value: openebs/linux-utils:3.5.0
+        - name: OPENEBS_IO_BASE_PATH
+          value: /var/openebs/local
+        livenessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - test `pgrep -c "^provisioner-loc.*"` = 1
+          initialDelaySeconds: 30
+          periodSeconds: 60
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openebs-ndm-operator
+  namespace: openebs
+  labels:
+    name: openebs-ndm-operator
+    openebs.io/component-name: ndm-operator
+    openebs.io/version: 3.5.0
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: openebs-ndm-operator
+      openebs.io/component-name: ndm-operator
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        name: openebs-ndm-operator
+        openebs.io/component-name: ndm-operator
+        openebs.io/version: 3.5.0
+    spec:
+      serviceAccountName: openebs-maya-operator
+      containers:
+      - name: node-disk-operator
+        image: openebs/node-disk-operator:2.1.0
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: WATCH_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: SERVICE_ACCOUNT
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.serviceAccountName
+        - name: OPERATOR_NAME
+          value: node-disk-operator
+        - name: CLEANUP_JOB_IMAGE
+          value: openebs/linux-utils:3.5.0
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8585
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8585
+          initialDelaySeconds: 5
+          periodSeconds: 10
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openebs-ndm-cluster-exporter
+  namespace: openebs
+  labels:
+    name: openebs-ndm-cluster-exporter
+    openebs.io/component-name: ndm-cluster-exporter
+    openebs.io/version: 3.5.0
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: openebs-ndm-cluster-exporter
+      openebs.io/component-name: ndm-cluster-exporter
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        name: openebs-ndm-cluster-exporter
+        openebs.io/component-name: ndm-cluster-exporter
+        openebs.io/version: 3.5.0
+    spec:
+      serviceAccountName: openebs-maya-operator
+      containers:
+      - name: ndm-cluster-exporter
+        image: openebs/node-disk-exporter:2.1.0
+        imagePullPolicy: IfNotPresent
+        command:
+        - /usr/local/bin/exporter
+        args:
+        - start
+        - --mode=cluster
+        - --port=$(METRICS_LISTEN_PORT)
+        - --metrics=/metrics
+        env:
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: METRICS_LISTEN_PORT
+          value: ":9100"
+        ports:
+        - name: metrics
+          containerPort: 9100
+          protocol: TCP

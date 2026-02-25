@@ -35,3 +35,11 @@ resources:
   # MetalLB (Load Balancer)
   # Note: MetalLB doit être installé séparément, voir metallb/README.md
   # - metallb/metallb.yaml
+
+  # Kube-Flannel (CNI réseau)
+  # Note: Flannel doit être installé AVANT les noeuds workers
+  # - kube-flannel/
+
+  # OpenEBS (Stockage persistant local)
+  # Note: OpenEBS doit être installé AVANT les PVC
+  # - openebs/

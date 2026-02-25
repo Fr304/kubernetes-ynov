@@ -15,14 +15,64 @@ echo -e "${BLUE}║       DÉPLOIEMENT ALGOHIVE SUR KUBERNETES                �
 echo -e "${BLUE}╚══════════════════════════════════════════════════════════╝${NC}"
 echo ""
 
-# Vérification du cluster
-echo -e "${YELLOW}Vérification du cluster...${NC}"
+# =============================================================================
+# Prérequis : Vérification du cluster
+# =============================================================================
+echo -e "${BLUE}=== Vérification des prérequis ===${NC}"
+echo ""
+
+# 1. Vérifier kubectl et connexion au cluster
+echo -e "${YELLOW}1. Connexion au cluster...${NC}"
 if ! kubectl cluster-info &>/dev/null; then
     echo -e "${RED}✗ Impossible de se connecter au cluster Kubernetes${NC}"
-    echo "Vérifiez que kubectl est configuré correctement."
+    echo "  Vérifiez que kubectl est configuré correctement."
+    echo "  → mkdir -p ~/.kube && cp /etc/kubernetes/admin.conf ~/.kube/config"
     exit 1
 fi
-echo -e "${GREEN}✓ Cluster accessible${NC}"
+echo -e "${GREEN}   ✓ Cluster accessible${NC}"
+
+# 2. Vérifier que les nodes sont Ready
+echo -e "${YELLOW}2. État des nodes...${NC}"
+NOT_READY=$(kubectl get nodes --no-headers | grep -v " Ready" | wc -l)
+if [ "$NOT_READY" -gt 0 ]; then
+    echo -e "${RED}✗ Certains nodes ne sont pas Ready :${NC}"
+    kubectl get nodes
+    exit 1
+fi
+NODE_COUNT=$(kubectl get nodes --no-headers | wc -l)
+echo -e "${GREEN}   ✓ $NODE_COUNT node(s) Ready${NC}"
+
+# 3. Vérifier le CNI (CoreDNS doit être Running)
+echo -e "${YELLOW}3. CNI (Container Network Interface)...${NC}"
+COREDNS_STATUS=$(kubectl get pods -n kube-system -l k8s-app=kube-dns -o jsonpath='{.items[0].status.phase}' 2>/dev/null || echo "NotFound")
+
+if [ "$COREDNS_STATUS" == "Running" ]; then
+    echo -e "${GREEN}   ✓ CNI fonctionnel (CoreDNS Running)${NC}"
+elif [ "$COREDNS_STATUS" == "Pending" ]; then
+    echo -e "${RED}✗ CNI non installé (CoreDNS en Pending)${NC}"
+    echo ""
+    echo "  Le CNI est requis pour que les pods communiquent."
+    echo "  Installez Flannel ou Calico :"
+    echo ""
+    echo "  # Flannel (simple)"
+    echo "  kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml"
+    echo ""
+    echo "  # Calico (avec Network Policies)"
+    echo "  kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.0/manifests/calico.yaml"
+    echo ""
+    echo "  Voir cni/README.md pour plus de détails."
+    exit 1
+else
+    echo -e "${YELLOW}   ⚠ Impossible de vérifier CoreDNS (status: $COREDNS_STATUS)${NC}"
+fi
+
+# 4. Vérifier le Pod CIDR
+echo -e "${YELLOW}4. Configuration réseau...${NC}"
+POD_CIDR=$(kubectl get nodes -o jsonpath='{.items[0].spec.podCIDR}' 2>/dev/null || echo "Non défini")
+echo -e "${GREEN}   ✓ Pod CIDR: $POD_CIDR${NC}"
+
+echo ""
+echo -e "${GREEN}✓ Tous les prérequis sont satisfaits${NC}"
 echo ""
 
 # =============================================================================

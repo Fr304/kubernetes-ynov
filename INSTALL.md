@@ -7,7 +7,8 @@ Ce guide explique comment déployer l'ensemble de l'infrastructure sur un cluste
 ### Cluster Kubernetes
 - Cluster kubeadm fonctionnel (1 master + N workers)
 - kubectl configuré sur votre machine
-- CNI installé (Calico, Flannel, etc.)
+- CNI installé — **Flannel v0.28.0** (voir [Étape 0a](#étape-0a--déployer-flannel-cni))
+- Stockage persistant — **OpenEBS v3.5.0** (voir [Étape 0b](#étape-0b--déployer-openebs))
 
 ### Vérification du cluster
 
@@ -32,12 +33,87 @@ worker2   Ready    <none>          10d   v1.29.0
 L'ordre est **important** car certains composants dépendent d'autres :
 
 ```
-1. MetalLB          → Fournit les IPs externes (LoadBalancer)
-2. Ingress NGINX    → Routage HTTP/HTTPS (utilise MetalLB)
-3. Application      → Algohive + bases de données
-4. Monitoring       → Grafana (optionnel)
-5. KubeView         → Visualisation (optionnel)
+0a. Flannel (CNI)   → Réseau inter-pods (avant de joindre les workers)
+0b. OpenEBS         → Stockage local persistant (avant les PVC)
+1.  MetalLB         → Fournit les IPs externes (LoadBalancer)
+2.  Ingress NGINX   → Routage HTTP/HTTPS (utilise MetalLB)
+3.  Application     → Algohive + bases de données
+4.  Monitoring      → Grafana (optionnel)
+5.  KubeView        → Visualisation (optionnel)
 ```
+
+---
+
+## Étape 0a : Déployer Flannel (CNI)
+
+Flannel est le CNI (Container Network Interface) qui gère le réseau overlay entre les pods. Il doit être installé **sur le master avant de joindre les workers**.
+
+```bash
+# Depuis le dossier algohive-k8s/
+kubectl apply -f kube-flannel/
+```
+
+Cela applique dans l'ordre : namespace, serviceaccount, RBAC, configmap, daemonset.
+
+### Vérification
+
+```bash
+# Attendre que le DaemonSet soit prêt sur tous les noeuds
+kubectl wait --namespace kube-flannel \
+  --for=condition=ready pod \
+  --selector=app=flannel \
+  --timeout=120s
+
+kubectl get pods -n kube-flannel
+```
+
+Résultat attendu (un pod par noeud) :
+
+```
+NAMESPACE      NAME                  READY   STATUS    NODE
+kube-flannel   kube-flannel-ds-xxx   1/1     Running   master
+kube-flannel   kube-flannel-ds-yyy   1/1     Running   worker1
+kube-flannel   kube-flannel-ds-zzz   1/1     Running   worker2
+```
+
+> Voir [`kube-flannel/README.md`](kube-flannel/README.md) pour les détails de configuration (CIDR, backend VXLAN).
+
+---
+
+## Étape 0b : Déployer OpenEBS
+
+OpenEBS fournit le stockage local persistant (`openebs-hostpath`) utilisé par tous les PVC de l'application. Il doit être installé **avant** `kubectl apply -k .`.
+
+```bash
+# Depuis le dossier algohive-k8s/
+kubectl apply -f openebs/
+```
+
+Cela applique dans l'ordre : namespace, serviceaccount, RBAC, configmap, storageclasses, deployments, daemonsets, services.
+
+### Vérification
+
+```bash
+# Attendre que le provisioner soit prêt
+kubectl wait --namespace openebs \
+  --for=condition=ready pod \
+  --selector=name=openebs-localpv-provisioner \
+  --timeout=120s
+
+kubectl get pods -n openebs
+kubectl get storageclass
+```
+
+Résultat attendu :
+
+```
+NAME               PROVISIONER        RECLAIMPOLICY   VOLUMEBINDINGMODE
+openebs-device     openebs.io/local   Delete          WaitForFirstConsumer
+openebs-hostpath   openebs.io/local   Delete          WaitForFirstConsumer
+```
+
+> **Note :** Les données sont stockées dans `/var/openebs/local/` sur le noeud qui schedule le pod.
+> Voir [`openebs/README.md`](openebs/README.md) pour les détails.
 
 ---
 
@@ -263,15 +339,19 @@ kubectl get ingress -A
 ### État attendu
 
 ```
-NAMESPACE        NAME                        READY   STATUS
-metallb-system   controller-xxx              1/1     Running
-metallb-system   speaker-xxx                 1/1     Running
-ingress-nginx    ingress-nginx-controller    1/1     Running
-algohive         algohive-client-xxx         1/1     Running
-algohive         algohive-server-xxx         1/1     Running
-algohive         algohive-db-xxx             1/1     Running
-algohive         algohive-cache-xxx          1/1     Running
-monitoring       grafana-xxx                 1/1     Running
+NAMESPACE        NAME                              READY   STATUS
+kube-flannel     kube-flannel-ds-xxx               1/1     Running
+openebs          openebs-localpv-provisioner-xxx   1/1     Running
+openebs          openebs-ndm-xxx                   1/1     Running
+openebs          openebs-ndm-operator-xxx          1/1     Running
+metallb-system   controller-xxx                    1/1     Running
+metallb-system   speaker-xxx                       1/1     Running
+ingress-nginx    ingress-nginx-controller-xxx      1/1     Running
+algohive         algohive-client-xxx               1/1     Running
+algohive         algohive-server-xxx               1/1     Running
+algohive         algohive-db-xxx                   1/1     Running
+algohive         algohive-cache-xxx                1/1     Running
+monitoring       grafana-xxx                       1/1     Running
 ```
 
 ---
@@ -332,8 +412,14 @@ kubectl delete -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/con
 # Supprimer MetalLB
 kubectl delete -f https://raw.githubusercontent.com/metallb/metallb/v0.15.3/config/manifests/metallb-native.yaml
 
+# Supprimer OpenEBS
+kubectl delete -f openebs/
+
+# Supprimer Flannel
+kubectl delete -f kube-flannel/
+
 # Ou supprimer les namespaces directement
-kubectl delete ns algohive metallb-system ingress-nginx monitoring
+kubectl delete ns algohive metallb-system ingress-nginx monitoring openebs kube-flannel
 ```
 
 ---

@@ -1,0 +1,11 @@
+# =============================================================================
+# Kube-Flannel - Namespace
+# =============================================================================
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kube-flannel
+  labels:
+    k8s-app: flannel
+    pod-security.kubernetes.io/enforce: privileged

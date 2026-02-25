@@ -6,18 +6,21 @@ Manifests Kubernetes pour déployer l'application AlgoHive sur un cluster bare-m
 
 - Cluster Kubernetes (kubeadm) fonctionnel
 - kubectl configuré
-- CNI installé (Calico, Flannel, etc.)
+- CNI — **Flannel v0.28.0** installé avant les noeuds workers (voir [`kube-flannel/`](kube-flannel/README.md))
+- Stockage — **OpenEBS v3.5.0** installé avant l'application (voir [`openebs/`](openebs/README.md))
 
 ## Structure
 
 ```
 algohive-k8s/
+├── kube-flannel/      # CNI réseau — Flannel v0.28.0 (avant les workers)
+├── openebs/           # Stockage local persistant — OpenEBS v3.5.0 (avant les PVC)
 ├── metallb/           # Load Balancer bare-metal (IPs externes)
 ├── ingress-nginx/     # Ingress Controller (routage HTTP/HTTPS)
 ├── base/              # Namespace algohive
 ├── secrets/           # Données sensibles (mots de passe)
 ├── configmaps/        # Configurations applicatives
-├── volumes/           # Stockage persistant (PVC)
+├── volumes/           # Stockage persistant (PVC — openebs-hostpath)
 ├── deployments/       # Applications (pods)
 ├── services/          # Ingress rules et Network Policies
 ├── monitoring/        # Grafana (dashboards)
@@ -42,6 +45,8 @@ Ce script installe dans l'ordre :
 1. MetalLB (Load Balancer)
 2. Ingress NGINX (routage HTTP)
 3. Application Algohive
+
+> **Note :** Flannel (CNI) et OpenEBS (stockage) sont des prérequis cluster à installer **avant** ce script. Voir [INSTALL.md](INSTALL.md).
 
 ### Installation manuelle
 
@@ -158,12 +163,14 @@ kubectl get events -n algohive --sort-by='.lastTimestamp'
 
 | Dossier | Description | Documentation |
 |---------|-------------|---------------|
+| `kube-flannel/` | CNI réseau Flannel v0.28.0 — à installer avant les workers | [README](kube-flannel/README.md) |
+| `openebs/` | Stockage local persistant OpenEBS v3.5.0 — à installer avant les PVC | [README](openebs/README.md) |
 | `metallb/` | Load Balancer Layer 2 pour IPs externes | [README](metallb/README.md) |
 | `ingress-nginx/` | Controller Ingress NGINX | [README](ingress-nginx/README.md) |
 | `base/` | Namespace algohive | - |
 | `secrets/` | Mots de passe base de données | - |
 | `configmaps/` | Configuration applicative | - |
-| `volumes/` | PersistentVolumeClaims | - |
+| `volumes/` | PersistentVolumeClaims (StorageClass : openebs-hostpath) | - |
 | `deployments/` | Pods applicatifs | - |
 | `services/` | Ingress rules + NetworkPolicies | - |
 | `monitoring/` | Stack Grafana | - |

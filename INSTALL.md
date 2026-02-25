@@ -283,7 +283,7 @@ Pour accéder aux applications via les noms de domaine, ajoutez ces entrées dan
 192.168.1.100  algohive.local
 192.168.1.100  api.algohive.local
 192.168.1.100  beehub.algohive.local
-192.168.1.100  grafana.algohive.local
+192.168.1.100  grafana.frd75.local
 192.168.1.100  kubeview.algohive.local
 ```
 
@@ -335,12 +335,12 @@ echo "║                                                          ║"
 echo "║ Ajoutez dans /etc/hosts :                                ║"
 echo "║   $INGRESS_IP  algohive.local                      ║"
 echo "║   $INGRESS_IP  api.algohive.local                  ║"
-echo "║   $INGRESS_IP  grafana.algohive.local              ║"
+echo "║   $INGRESS_IP  grafana.frd75.local                 ║"
 echo "║                                                          ║"
 echo "║ URLs :                                                   ║"
 echo "║   http://algohive.local                                  ║"
 echo "║   http://api.algohive.local                              ║"
-echo "║   http://grafana.algohive.local                          ║"
+echo "║   http://grafana.frd75.local                             ║"
 echo "╚══════════════════════════════════════════════════════════╝"
 ```
 

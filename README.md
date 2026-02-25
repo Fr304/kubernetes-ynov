@@ -115,7 +115,7 @@ Après déploiement, ajoutez dans `/etc/hosts` :
 192.168.1.100  algohive.local
 192.168.1.100  api.algohive.local
 192.168.1.100  beehub.algohive.local
-192.168.1.100  grafana.algohive.local
+192.168.1.100  grafana.frd75.local
 192.168.1.100  kubeview.algohive.local
 ```
 
@@ -124,7 +124,7 @@ Après déploiement, ajoutez dans `/etc/hosts` :
 | Frontend | http://algohive.local |
 | API | http://api.algohive.local |
 | BeeHub | http://beehub.algohive.local |
-| Grafana | http://grafana.algohive.local |
+| Grafana | http://grafana.frd75.local |
 | KubeView | http://kubeview.algohive.local |
 
 ### Ports NodePort (fallback sans Ingress)
@@ -134,8 +134,6 @@ Après déploiement, ajoutez dans `/etc/hosts` :
 | Frontend | 30000 |
 | API | 30080 |
 | BeeHub | 30082 |
-| Prometheus | 30090 |
-| Grafana | 30030 |
 
 ---
 

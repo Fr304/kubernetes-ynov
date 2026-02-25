@@ -67,17 +67,3 @@ spec:
   resources:
     requests:
       storage: 10Gi
----
-# PVC pour Grafana
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: grafana-data-pvc
-  namespace: algohive
-spec:
-  storageClassName: openebs-hostpath
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 2Gi

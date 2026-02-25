@@ -58,12 +58,28 @@ kubeStateMetrics:
 nodeExporter:
   enabled: true
 
-# Désactivation des composants non accessibles en bare-metal
+# Composants control-plane activés après fix des bind-address (voir kubeadm/README.md)
+# etcd        : --listen-metrics-urls=http://0.0.0.0:2381
+# scheduler   : --bind-address=0.0.0.0
+# controller  : --bind-address=0.0.0.0
 kubeControllerManager:
-  enabled: false
+  enabled: true
+  endpoints:
+  - 192.168.1.142
+
 kubeScheduler:
-  enabled: false
-kubeProxy:
-  enabled: false
+  enabled: true
+  endpoints:
+  - 192.168.1.142
+
 kubeEtcd:
+  enabled: true
+  endpoints:
+  - 192.168.1.142
+  service:
+    port: 2381
+    targetPort: 2381
+
+# kube-proxy non accessible en bare-metal kubeadm
+kubeProxy:
   enabled: false

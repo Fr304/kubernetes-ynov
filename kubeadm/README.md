@@ -236,7 +236,55 @@ kubectl get nodes
 
 ---
 
-## Étape 5 — Déployer le reste de l'infrastructure
+## Étape 5 — Exposer les métriques du control-plane (Prometheus)
+
+Par défaut, kubeadm configure etcd, kube-scheduler et kube-controller-manager pour n'écouter que sur `127.0.0.1`. Il faut exposer leurs métriques sur `0.0.0.0` pour que Prometheus puisse les scraper.
+
+```bash
+# Modifier les static pod manifests sur le master
+sed -i 's|--listen-metrics-urls=http://127.0.0.1:2381|--listen-metrics-urls=http://0.0.0.0:2381|' \
+  /etc/kubernetes/manifests/etcd.yaml
+
+sed -i 's|--bind-address=127.0.0.1|--bind-address=0.0.0.0|' \
+  /etc/kubernetes/manifests/kube-scheduler.yaml
+
+sed -i 's|--bind-address=127.0.0.1|--bind-address=0.0.0.0|' \
+  /etc/kubernetes/manifests/kube-controller-manager.yaml
+```
+
+> Le kubelet détecte automatiquement les changements et redémarre les pods (environ 20s).
+
+Vérifier que les pods ont redémarré :
+
+```bash
+kubectl get pods -n kube-system | grep -E "etcd|scheduler|controller"
+# etcd-ubuntu-kubernetes-master                      1/1     Running
+# kube-controller-manager-ubuntu-kubernetes-master   1/1     Running
+# kube-scheduler-ubuntu-kubernetes-master            1/1     Running
+```
+
+Vérifier que Prometheus scrape correctement :
+
+```bash
+# Les 3 targets doivent être "up"
+kubectl exec -n monitoring prometheus-monitoring-kube-prometheus-prometheus-0 -- \
+  wget -qO- 'http://localhost:9090/api/v1/targets?state=active' | \
+  python3 -c "
+import sys, json
+data = json.load(sys.stdin)
+for t in data['data']['activeTargets']:
+    job = t['labels'].get('job','')
+    if any(x in job for x in ['etcd','scheduler','controller']):
+        print(job, t['health'])
+"
+# kube-controller-manager up
+# kube-etcd              up
+# kube-scheduler         up
+```
+
+---
+
+## Étape 6 — Déployer le reste de l'infrastructure
 
 Continuer avec les étapes de [INSTALL.md](../INSTALL.md) :
 

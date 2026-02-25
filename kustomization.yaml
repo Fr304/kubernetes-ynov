@@ -21,10 +21,9 @@ resources:
   - deployments/05-algohive-server.yaml
   - deployments/06-algohive-client.yaml
   - deployments/07-monitoring.yaml
-  # Services
-  - services/ingress.yaml
   # Network Policies (optionnel)
   # - services/network-policies.yaml
+  # NOTE: services/ingress.yaml est un template → appliqué via envsubst par install-all.sh/deploy.sh
 
   # KubeView
   - kubeview/

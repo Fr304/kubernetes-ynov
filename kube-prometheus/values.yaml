@@ -1,21 +1,19 @@
-# kube-prometheus-stack — Helm values
+# kube-prometheus-stack — Helm values template
 # Chart    : prometheus-community/kube-prometheus-stack v80.14.3
 # Release  : monitoring
 # Namespace: monitoring
 #
-# Installation :
-#   helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-#   helm repo update
+# Ce fichier est un TEMPLATE — utiliser envsubst avant helm install :
+#
+#   source cluster.env && export MASTER_IP
+#   envsubst < kube-prometheus/values.yaml > /tmp/prom-values.yaml
 #   helm install monitoring prometheus-community/kube-prometheus-stack \
 #     --namespace monitoring --create-namespace \
 #     --version 80.14.3 \
-#     -f values.yaml
+#     -f /tmp/prom-values.yaml
 #
-# Mise à jour :
-#   helm upgrade monitoring prometheus-community/kube-prometheus-stack \
-#     --namespace monitoring \
-#     --version 80.14.3 \
-#     -f values.yaml
+# Variables requises (définies dans cluster.env) :
+#   MASTER_IP  → IP du nœud master (endpoints control-plane)
 
 # -------------------------------------------------------------------
 # Prometheus
@@ -47,7 +45,7 @@ grafana:
   enabled: true
   adminPassword: prom-operator   # À changer en production !
   ingress:
-    enabled: false               # Ingress géré séparément (services/ingress.yaml)
+    enabled: false               # Ingress géré séparément (monitoring/grafana-ingress.yaml)
 
 # -------------------------------------------------------------------
 # Composants intégrés
@@ -62,23 +60,20 @@ nodeExporter:
 # etcd        : --listen-metrics-urls=http://0.0.0.0:2381
 # scheduler   : --bind-address=0.0.0.0
 # controller  : --bind-address=0.0.0.0
-#
-# À adapter selon cluster.env :
-#   MASTER_IP=192.168.1.142  → endpoints ci-dessous
 kubeControllerManager:
   enabled: true
   endpoints:
-  - 192.168.1.142   # MASTER_IP (voir cluster.env)
+  - ${MASTER_IP}
 
 kubeScheduler:
   enabled: true
   endpoints:
-  - 192.168.1.142   # MASTER_IP (voir cluster.env)
+  - ${MASTER_IP}
 
 kubeEtcd:
   enabled: true
   endpoints:
-  - 192.168.1.142   # MASTER_IP (voir cluster.env)
+  - ${MASTER_IP}
   service:
     port: 2381
     targetPort: 2381

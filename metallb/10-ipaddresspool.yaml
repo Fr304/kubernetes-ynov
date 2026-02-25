@@ -1,20 +1,13 @@
 # =============================================================================
-# MetalLB IPAddressPool
-# =============================================================================
-# Définit la plage d'adresses IP disponibles pour les services LoadBalancer.
+# MetalLB IPAddressPool — template, rendu via envsubst depuis cluster.env
+# Usage : envsubst < 10-ipaddresspool.yaml | kubectl apply -f -
 #
-# Configuration actuelle du cluster:
-# - Nom: first-pool
-# - Plage: 192.168.1.100 - 192.168.1.105 (6 IPs disponibles)
-# - autoAssign: true (les IPs sont assignées automatiquement)
-#
-# À adapter selon cluster.env :
-#   LB_POOL_START=192.168.1.100  → adresse de début de la plage
-#   LB_POOL_END=192.168.1.105    → adresse de fin de la plage
-#   LB_INGRESS_IP=192.168.1.100  → IP assignée à ingress-nginx
+# Variables requises (définies dans cluster.env) :
+#   LB_POOL_START  → adresse de début de la plage (ex: 192.168.1.100)
+#   LB_POOL_END    → adresse de fin de la plage   (ex: 192.168.1.105)
 #
 # IMPORTANT: Assurez-vous que ces IPs ne sont pas utilisées par d'autres
-# équipements sur votre réseau (DHCP, machines physiques, etc.)
+# équipements sur votre réseau (hors plage DHCP).
 # =============================================================================
 
 apiVersion: metallb.io/v1beta1
@@ -24,5 +17,5 @@ metadata:
   namespace: metallb-system
 spec:
   addresses:
-    - 192.168.1.100-192.168.1.105
+    - ${LB_POOL_START}-${LB_POOL_END}
   autoAssign: true

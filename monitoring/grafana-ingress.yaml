@@ -1,0 +1,25 @@
+# Ingress Grafana — template, rendu via envsubst depuis cluster.env
+# Usage : envsubst < monitoring/grafana-ingress.yaml | kubectl apply -f -
+#
+# Variables requises (définies dans cluster.env) :
+#   DOMAIN_GRAFANA  → ex: grafana.frd75.local
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: grafana-ingress
+  namespace: monitoring
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: ${DOMAIN_GRAFANA}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: monitoring-grafana
+            port:
+              number: 80

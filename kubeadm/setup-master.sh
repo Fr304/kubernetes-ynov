@@ -20,12 +20,20 @@ REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
 # Charger les variables du cluster (cluster.env)
 CLUSTER_ENV="${REPO_DIR}/cluster.env"
-[[ -f "$CLUSTER_ENV" ]] && source "$CLUSTER_ENV" || warn "cluster.env introuvable, utilisation des valeurs par défaut"
+if [[ -f "$CLUSTER_ENV" ]]; then
+  set -a; source "$CLUSTER_ENV"; set +a
+else
+  warn "cluster.env introuvable, utilisation des valeurs par défaut"
+fi
 
 K8S_VERSION="${K8S_VERSION:-1.30.14-1.1}"
 CONTAINERD_VERSION="${CONTAINERD_VERSION:-2.2.0-2~ubuntu.22.04~jammy}"
 MASTER_IP="${MASTER_IP:-192.168.1.142}"
+MASTER_HOSTNAME="${MASTER_HOSTNAME:-ubuntu-kubernetes-master}"
 POD_CIDR="${POD_CIDR:-10.244.0.0/16}"
+SERVICE_CIDR="${SERVICE_CIDR:-10.96.0.0/12}"
+CLUSTER_DNS="${CLUSTER_DNS:-10.96.0.10}"
+CLUSTER_DOMAIN="${CLUSTER_DOMAIN:-cluster.local}"
 
 # ============================================================
 echo -e "\n${BOLD}╔══════════════════════════════════════════════╗${NC}"
@@ -114,10 +122,16 @@ ok "kubeadm, kubelet, kubectl ${K8S_VERSION} installés et figés"
 
 # --- Étape 6 : kubeadm init ---------------------------------
 log "Étape 6/8 — Initialisation du cluster (kubeadm init)"
-KUBEADM_CONFIG="${REPO_DIR}/kubeadm/kubeadm-config.yaml"
-[[ -f "$KUBEADM_CONFIG" ]] || die "Fichier introuvable : $KUBEADM_CONFIG"
+KUBEADM_TPL="${REPO_DIR}/kubeadm/kubeadm-config.yaml"
+[[ -f "$KUBEADM_TPL" ]] || die "Fichier introuvable : $KUBEADM_TPL"
+
+# Rendre le template kubeadm-config avec les variables de cluster.env
+KUBEADM_CONFIG=$(mktemp /tmp/kubeadm-config-XXXXXX.yaml)
+envsubst < "$KUBEADM_TPL" > "$KUBEADM_CONFIG"
+log "Config rendue : ${KUBEADM_CONFIG} (MASTER_IP=${MASTER_IP}, MASTER_HOSTNAME=${MASTER_HOSTNAME})"
 
 kubeadm init --config "$KUBEADM_CONFIG" --upload-certs
+rm -f "$KUBEADM_CONFIG"
 ok "Cluster initialisé"
 
 # --- Étape 7 : Configurer kubectl ---------------------------

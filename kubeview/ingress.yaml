@@ -1,3 +1,8 @@
+# Ingress KubeView — template, rendu via envsubst depuis cluster.env
+# Usage : envsubst < kubeview/ingress.yaml | kubectl apply -f -
+#
+# Variables requises (définies dans cluster.env) :
+#   DOMAIN_KUBEVIEW  → ex: kubeview.algohive.local
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -9,7 +14,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: kubeview.algohive.local
+    - host: ${DOMAIN_KUBEVIEW}
       http:
         paths:
           - path: /

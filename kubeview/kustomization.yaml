@@ -11,4 +11,4 @@ resources:
   - clusterrolebinding.yaml
   - deployment.yaml
   - service.yaml
-  - ingress.yaml
+  # NOTE: ingress.yaml est un template → appliqué via envsubst par install-all.sh/deploy.sh

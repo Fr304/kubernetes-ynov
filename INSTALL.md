@@ -191,33 +191,29 @@ ingress-nginx-controller   LoadBalancer   10.104.163.197  192.168.1.100   80:318
 
 ## Étape 3 : Déployer l'Application Algohive
 
-### Option A : Tout d'un coup avec Kustomize (recommandé)
+### Option A : Script automatique (recommandé)
 
 ```bash
 # Depuis le dossier algohive-k8s/
-kubectl apply -k .
+# Adapte cluster.env, puis :
+bash install-all.sh
 ```
 
-### Option B : Dossier par dossier
+### Option B : Manuellement
+
+> Les fichiers d'Ingress sont des **templates** — ils nécessitent `envsubst` pour substituer les domaines depuis `cluster.env`.
 
 ```bash
-# 1. Namespace
-kubectl apply -f base/
+# Charger les variables
+source cluster.env && export $(cut -d= -f1 cluster.env | grep -v '^#')
 
-# 2. Secrets (mots de passe)
-kubectl apply -f secrets/
+# 1. Application principale (Kustomize)
+kubectl apply -k .
 
-# 3. ConfigMaps (configuration)
-kubectl apply -f configmaps/
-
-# 4. Volumes persistants
-kubectl apply -f volumes/
-
-# 5. Deployments (applications)
-kubectl apply -f deployments/
-
-# 6. Services et Ingress
-kubectl apply -f services/
+# 2. Ingress (via envsubst — contiennent des variables ${DOMAIN_*})
+envsubst < services/ingress.yaml       | kubectl apply -f -
+envsubst < monitoring/grafana-ingress.yaml | kubectl apply -f -
+envsubst < kubeview/ingress.yaml       | kubectl apply -f -
 ```
 
 ### Vérification
@@ -244,13 +240,17 @@ kube-prometheus-stack est installé via **Helm**. Il fournit Prometheus, Alertma
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update
 
-# 2. Installer la stack avec les valeurs du dépôt
+# 2. Rendre le template values.yaml avec les variables de cluster.env
+source cluster.env && export MASTER_IP
+envsubst < kube-prometheus/values.yaml > /tmp/prom-values.yaml
+
+# 3. Installer la stack
 helm install monitoring prometheus-community/kube-prometheus-stack \
   --namespace monitoring --create-namespace \
   --version 80.14.3 \
-  -f kube-prometheus/values.yaml
+  -f /tmp/prom-values.yaml
 
-# 3. Vérifier les pods
+# 4. Vérifier les pods
 kubectl get pods -n monitoring
 ```
 

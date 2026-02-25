@@ -11,3 +11,4 @@ resources:
   - grafana-configmaps.yaml
   - grafana-deployment.yaml
   - grafana-service.yaml
+  # NOTE: grafana-ingress.yaml est un template → appliqué via envsubst par install-all.sh/deploy.sh

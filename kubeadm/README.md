@@ -2,6 +2,25 @@
 
 Guide complet pour reproduire le cluster Kubernetes bare-metal du projet AlgoHive.
 
+## Scripts d'installation
+
+| Script | Usage | Cible |
+|--------|-------|-------|
+| `setup-master.sh` | Prépare le nœud + `kubeadm init` + Flannel | Master uniquement |
+| `setup-worker.sh` | Prépare le nœud + `kubeadm join` | Chaque worker |
+
+```bash
+# Sur le master
+sudo bash kubeadm/setup-master.sh
+
+# Sur chaque worker (copier-coller la commande join affichée par le master)
+sudo bash kubeadm/setup-worker.sh
+```
+
+> Les scripts automatisent toutes les étapes manuelles décrites ci-dessous.
+
+---
+
 ## Topologie du Cluster
 
 | Nœud | Rôle | IP | OS |
@@ -274,7 +293,9 @@ grep SystemdCgroup /etc/containerd/config.toml
 
 | Action | Commande |
 |--------|----------|
-| Init master | `kubeadm init --config kubeadm/kubeadm-config.yaml` |
+| Setup master (automatique) | `sudo bash kubeadm/setup-master.sh` |
+| Setup worker (automatique) | `sudo bash kubeadm/setup-worker.sh` |
+| Init master (manuel) | `kubeadm init --config kubeadm/kubeadm-config.yaml` |
 | Créer token join | `kubeadm token create --print-join-command` |
 | Joindre un worker | `kubeadm join 192.168.1.142:6443 --token … --discovery-token-ca-cert-hash …` |
 | Voir les nœuds | `kubectl get nodes -o wide` |

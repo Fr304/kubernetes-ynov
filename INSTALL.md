@@ -5,7 +5,7 @@ Ce guide explique comment déployer l'ensemble de l'infrastructure sur un cluste
 ## Prérequis
 
 ### Cluster Kubernetes
-- Cluster kubeadm fonctionnel (1 master + N workers)
+- Cluster kubeadm fonctionnel (1 master + N workers) — voir [`kubeadm/`](kubeadm/README.md)
 - kubectl configuré sur votre machine
 - CNI installé — **Flannel v0.28.0** (voir [Étape 0a](#étape-0a--déployer-flannel-cni))
 - Stockage persistant — **OpenEBS v3.5.0** (voir [Étape 0b](#étape-0b--déployer-openebs))
@@ -20,10 +20,11 @@ kubectl cluster-info
 kubectl get nodes
 
 # Tous les nodes doivent être "Ready"
-NAME      STATUS   ROLES           AGE   VERSION
-master    Ready    control-plane   10d   v1.29.0
-worker1   Ready    <none>          10d   v1.29.0
-worker2   Ready    <none>          10d   v1.29.0
+NAME                        STATUS   ROLES           AGE   VERSION
+ubuntu-kubernetes-master    Ready    control-plane   84d   v1.30.14
+ubuntu-kubernetes-slave-1   Ready    <none>          84d   v1.30.14
+ubuntu-kubernetes-slave-2   Ready    <none>          84d   v1.30.14
+ubuntu-kubernetes-slave-3   Ready    <none>          84d   v1.30.14
 ```
 
 ---
@@ -33,6 +34,7 @@ worker2   Ready    <none>          10d   v1.29.0
 L'ordre est **important** car certains composants dépendent d'autres :
 
 ```
+(-1. kubeadm init          → Initialiser le cluster — voir kubeadm/README.md)
 0a. Flannel (CNI)          → Réseau inter-pods (avant de joindre les workers)
 0b. OpenEBS                → Stockage local persistant (avant les PVC)
 1.  MetalLB                → Fournit les IPs externes (LoadBalancer)

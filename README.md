@@ -4,7 +4,7 @@ Manifests Kubernetes pour déployer l'application AlgoHive sur un cluster bare-m
 
 ## Prérequis
 
-- Cluster Kubernetes (kubeadm) fonctionnel
+- Cluster Kubernetes (kubeadm) fonctionnel — voir [`kubeadm/`](kubeadm/README.md)
 - kubectl configuré
 - CNI — **Flannel v0.28.0** installé avant les noeuds workers (voir [`kube-flannel/`](kube-flannel/README.md))
 - Stockage — **OpenEBS v3.5.0** installé avant l'application (voir [`openebs/`](openebs/README.md))
@@ -13,6 +13,7 @@ Manifests Kubernetes pour déployer l'application AlgoHive sur un cluster bare-m
 
 ```
 algohive-k8s/
+├── kubeadm/           # Init cluster kubeadm (config + guide d'installation)
 ├── kube-flannel/      # CNI réseau — Flannel v0.28.0 (avant les workers)
 ├── openebs/           # Stockage local persistant — OpenEBS v3.5.0 (avant les PVC)
 ├── metallb/           # Load Balancer bare-metal (IPs externes)
@@ -164,6 +165,7 @@ kubectl get events -n algohive --sort-by='.lastTimestamp'
 
 | Dossier | Description | Documentation |
 |---------|-------------|---------------|
+| `kubeadm/` | Init cluster kubeadm v1.30.14 — config et guide d'installation bare-metal | [README](kubeadm/README.md) |
 | `kube-flannel/` | CNI réseau Flannel v0.28.0 — à installer avant les workers | [README](kube-flannel/README.md) |
 | `openebs/` | Stockage local persistant OpenEBS v3.5.0 — à installer avant les PVC | [README](openebs/README.md) |
 | `metallb/` | Load Balancer Layer 2 pour IPs externes | [README](metallb/README.md) |

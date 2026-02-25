@@ -23,7 +23,8 @@ algohive-k8s/
 ├── volumes/           # Stockage persistant (PVC — openebs-hostpath)
 ├── deployments/       # Applications (pods)
 ├── services/          # Ingress rules et Network Policies
-├── monitoring/        # Grafana (dashboards)
+├── kube-prometheus/   # kube-prometheus-stack Helm (Prometheus + Alertmanager)
+├── monitoring/        # Grafana custom (dashboards)
 ├── kubeview/          # Visualisation du cluster
 ├── install-all.sh     # Script de déploiement complet
 ├── deploy.sh          # Script de gestion
@@ -173,7 +174,8 @@ kubectl get events -n algohive --sort-by='.lastTimestamp'
 | `volumes/` | PersistentVolumeClaims (StorageClass : openebs-hostpath) | [README](volumes/README.md) |
 | `deployments/` | Pods applicatifs | [README](deployments/README.md) |
 | `services/` | Ingress rules + NetworkPolicies | [README](services/README.md) |
-| `monitoring/` | Stack Grafana | [README](monitoring/README.md) |
+| `kube-prometheus/` | kube-prometheus-stack Helm v80.14.3 (Prometheus, Alertmanager, node-exporter) | [README](kube-prometheus/README.md) |
+| `monitoring/` | Grafana custom avec sidecars (dashboards) | [README](monitoring/README.md) |
 | `kubeview/` | Visualisation cluster | [README](kubeview/README.md) |
 
 ---

@@ -33,13 +33,14 @@ worker2   Ready    <none>          10d   v1.29.0
 L'ordre est **important** car certains composants dépendent d'autres :
 
 ```
-0a. Flannel (CNI)   → Réseau inter-pods (avant de joindre les workers)
-0b. OpenEBS         → Stockage local persistant (avant les PVC)
-1.  MetalLB         → Fournit les IPs externes (LoadBalancer)
-2.  Ingress NGINX   → Routage HTTP/HTTPS (utilise MetalLB)
-3.  Application     → Algohive + bases de données
-4.  Monitoring      → Grafana (optionnel)
-5.  KubeView        → Visualisation (optionnel)
+0a. Flannel (CNI)          → Réseau inter-pods (avant de joindre les workers)
+0b. OpenEBS                → Stockage local persistant (avant les PVC)
+1.  MetalLB                → Fournit les IPs externes (LoadBalancer)
+2.  Ingress NGINX          → Routage HTTP/HTTPS (utilise MetalLB)
+3.  Application            → Algohive + bases de données
+4.  kube-prometheus-stack  → Prometheus + Alertmanager (via Helm — optionnel)
+5.  Monitoring Grafana     → Grafana custom avec sidecars (optionnel)
+6.  KubeView               → Visualisation cluster (optionnel)
 ```
 
 ---
@@ -232,7 +233,30 @@ kubectl wait --namespace algohive \
 
 ---
 
-## Étape 4 : Déployer le Monitoring (optionnel)
+## Étape 4 : Déployer kube-prometheus-stack (optionnel)
+
+kube-prometheus-stack est installé via **Helm**. Il fournit Prometheus, Alertmanager, kube-state-metrics et node-exporter.
+
+```bash
+# 1. Ajouter le repo Helm prometheus-community
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+
+# 2. Installer la stack avec les valeurs du dépôt
+helm install monitoring prometheus-community/kube-prometheus-stack \
+  --namespace monitoring --create-namespace \
+  --version 80.14.3 \
+  -f kube-prometheus/values.yaml
+
+# 3. Vérifier les pods
+kubectl get pods -n monitoring
+```
+
+> Voir [`kube-prometheus/README.md`](kube-prometheus/README.md) pour les détails.
+
+---
+
+## Étape 5 : Déployer le Monitoring Grafana custom (optionnel)
 
 ```bash
 kubectl apply -k monitoring/
@@ -240,7 +264,7 @@ kubectl apply -k monitoring/
 
 ---
 
-## Étape 5 : Déployer KubeView (optionnel)
+## Étape 6 : Déployer KubeView (optionnel)
 
 ```bash
 kubectl apply -k kubeview/
@@ -339,19 +363,24 @@ kubectl get ingress -A
 ### État attendu
 
 ```
-NAMESPACE        NAME                              READY   STATUS
-kube-flannel     kube-flannel-ds-xxx               1/1     Running
-openebs          openebs-localpv-provisioner-xxx   1/1     Running
-openebs          openebs-ndm-xxx                   1/1     Running
-openebs          openebs-ndm-operator-xxx          1/1     Running
-metallb-system   controller-xxx                    1/1     Running
-metallb-system   speaker-xxx                       1/1     Running
-ingress-nginx    ingress-nginx-controller-xxx      1/1     Running
-algohive         algohive-client-xxx               1/1     Running
-algohive         algohive-server-xxx               1/1     Running
-algohive         algohive-db-xxx                   1/1     Running
-algohive         algohive-cache-xxx                1/1     Running
-monitoring       grafana-xxx                       1/1     Running
+NAMESPACE        NAME                                               READY   STATUS
+kube-flannel     kube-flannel-ds-xxx                                1/1     Running
+openebs          openebs-localpv-provisioner-xxx                    1/1     Running
+openebs          openebs-ndm-xxx                                    1/1     Running
+openebs          openebs-ndm-operator-xxx                           1/1     Running
+metallb-system   controller-xxx                                     1/1     Running
+metallb-system   speaker-xxx                                        1/1     Running
+ingress-nginx    ingress-nginx-controller-xxx                       1/1     Running
+algohive         algohive-client-xxx                                1/1     Running
+algohive         algohive-server-xxx                                1/1     Running
+algohive         algohive-db-xxx                                    1/1     Running
+algohive         algohive-cache-xxx                                 1/1     Running
+monitoring       monitoring-kube-prometheus-operator-xxx            1/1     Running
+monitoring       prometheus-monitoring-kube-prometheus-prometheus-0 2/2     Running
+monitoring       alertmanager-monitoring-kube-prometheus-alertmanager-0 2/2 Running
+monitoring       monitoring-kube-state-metrics-xxx                  1/1     Running
+monitoring       monitoring-prometheus-node-exporter-xxx            1/1     Running (×nodes)
+monitoring       monitoring-grafana-xxx                             3/3     Running
 ```
 
 ---

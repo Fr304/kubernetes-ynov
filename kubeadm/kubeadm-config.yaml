@@ -1,11 +1,8 @@
+---
 # Configuration kubeadm — template, rendu via envsubst depuis cluster.env
 # Usage : envsubst < kubeadm-config.yaml > /tmp/kubeadm-config.yaml
 #         kubeadm init --config /tmp/kubeadm-config.yaml
-#
-# Variables requises (définies dans cluster.env) :
-#   MASTER_IP, MASTER_HOSTNAME, POD_CIDR, SERVICE_CIDR, CLUSTER_DNS, CLUSTER_DOMAIN
-
----
+# Variables (cluster.env) : MASTER_IP, MASTER_HOSTNAME, POD_CIDR, SERVICE_CIDR, CLUSTER_DNS, CLUSTER_DOMAIN
 apiVersion: kubeadm.k8s.io/v1beta3
 kind: InitConfiguration
 localAPIEndpoint:
@@ -17,7 +14,6 @@ nodeRegistration:
   taints:
   - effect: NoSchedule
     key: node-role.kubernetes.io/control-plane
-
 ---
 apiVersion: kubeadm.k8s.io/v1beta3
 kind: ClusterConfiguration
@@ -38,7 +34,6 @@ apiServer:
 controllerManager: {}
 scheduler: {}
 dns: {}
-
 ---
 apiVersion: kubelet.config.k8s.io/v1beta1
 kind: KubeletConfiguration

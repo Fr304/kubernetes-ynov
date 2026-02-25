@@ -136,11 +136,24 @@ ok "Cluster initialisé"
 
 # --- Étape 7 : Configurer kubectl ---------------------------
 log "Étape 7/8 — Configuration de kubectl"
-KUBE_DIR="${HOME}/.kube"
+
+# Pour root (nécessaire pour les étapes suivantes du script)
+KUBE_DIR="/root/.kube"
 mkdir -p "$KUBE_DIR"
 cp /etc/kubernetes/admin.conf "$KUBE_DIR/config"
-chown "$(id -u):$(id -g)" "$KUBE_DIR/config"
-ok "kubectl configuré → ${KUBE_DIR}/config"
+chown 0:0 "$KUBE_DIR/config"
+ok "kubectl configuré pour root → ${KUBE_DIR}/config"
+
+# Pour l'utilisateur non-root qui a lancé sudo (ex: ubuntu)
+if [[ -n "${SUDO_USER:-}" && "$SUDO_USER" != "root" ]]; then
+  USER_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
+  USER_KUBE_DIR="${USER_HOME}/.kube"
+  mkdir -p "$USER_KUBE_DIR"
+  cp /etc/kubernetes/admin.conf "$USER_KUBE_DIR/config"
+  chown "$(id -u "$SUDO_USER"):$(id -g "$SUDO_USER")" "$USER_KUBE_DIR/config"
+  ok "kubectl configuré pour ${SUDO_USER} → ${USER_KUBE_DIR}/config"
+  warn "Utilisez 'kubectl' sans sudo depuis le compte ${SUDO_USER}"
+fi
 
 # Activer l'autocomplétion
 if [[ -f /etc/bash_completion ]]; then

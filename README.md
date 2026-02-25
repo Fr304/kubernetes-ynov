@@ -48,7 +48,12 @@ Ce script installe dans l'ordre :
 2. Ingress NGINX (routage HTTP)
 3. Application Algohive
 
-> **Note :** Flannel (CNI) et OpenEBS (stockage) sont des prérequis cluster à installer **avant** ce script. Voir [INSTALL.md](INSTALL.md).
+> **Note :** Les prérequis suivants doivent être installés **avant** ce script :
+> 1. **Kubeadm** — cluster initialisé (voir [`kubeadm/`](kubeadm/README.md))
+> 2. **Flannel** — CNI réseau (voir [`kube-flannel/`](kube-flannel/README.md))
+> 3. **OpenEBS** — stockage persistant (voir [`openebs/`](openebs/README.md))
+>
+> Voir [INSTALL.md](INSTALL.md) pour le guide complet.
 
 ### Installation manuelle
 

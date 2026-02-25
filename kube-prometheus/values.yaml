@@ -62,20 +62,23 @@ nodeExporter:
 # etcd        : --listen-metrics-urls=http://0.0.0.0:2381
 # scheduler   : --bind-address=0.0.0.0
 # controller  : --bind-address=0.0.0.0
+#
+# À adapter selon cluster.env :
+#   MASTER_IP=192.168.1.142  → endpoints ci-dessous
 kubeControllerManager:
   enabled: true
   endpoints:
-  - 192.168.1.142
+  - 192.168.1.142   # MASTER_IP (voir cluster.env)
 
 kubeScheduler:
   enabled: true
   endpoints:
-  - 192.168.1.142
+  - 192.168.1.142   # MASTER_IP (voir cluster.env)
 
 kubeEtcd:
   enabled: true
   endpoints:
-  - 192.168.1.142
+  - 192.168.1.142   # MASTER_IP (voir cluster.env)
   service:
     port: 2381
     targetPort: 2381

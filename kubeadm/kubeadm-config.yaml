@@ -1,6 +1,12 @@
 # Configuration kubeadm extraite du cluster
 # Utilisée pour : kubeadm init --config kubeadm-config.yaml
-# À adapter : remplacer 192.168.1.142 par l'IP de votre master
+# À adapter : remplacer les valeurs ci-dessous selon cluster.env
+#   MASTER_IP=192.168.1.142  → advertiseAddress, controlPlaneEndpoint
+#   MASTER_HOSTNAME=ubuntu-kubernetes-master  → nodeRegistration.name
+#   POD_CIDR=10.244.0.0/16  → networking.podSubnet
+#   SERVICE_CIDR=10.96.0.0/12  → networking.serviceSubnet
+#   CLUSTER_DNS=10.96.0.10  → kubelet.clusterDNS
+#   CLUSTER_DOMAIN=cluster.local  → networking.dnsDomain, kubelet.clusterDomain
 
 ---
 apiVersion: kubeadm.k8s.io/v1beta3

@@ -16,11 +16,16 @@ warn() { echo -e "${YELLOW}  ⚠${NC} $*"; }
 die()  { echo -e "${RED}  ✗ ERREUR :${NC} $*" >&2; exit 1; }
 
 # --- Paramètres ---------------------------------------------
-K8S_VERSION="1.30.14-1.1"
-CONTAINERD_VERSION="2.2.0-2~ubuntu.22.04~jammy"
-MASTER_IP="192.168.1.142"
-POD_CIDR="10.244.0.0/16"
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+
+# Charger les variables du cluster (cluster.env)
+CLUSTER_ENV="${REPO_DIR}/cluster.env"
+[[ -f "$CLUSTER_ENV" ]] && source "$CLUSTER_ENV" || warn "cluster.env introuvable, utilisation des valeurs par défaut"
+
+K8S_VERSION="${K8S_VERSION:-1.30.14-1.1}"
+CONTAINERD_VERSION="${CONTAINERD_VERSION:-2.2.0-2~ubuntu.22.04~jammy}"
+MASTER_IP="${MASTER_IP:-192.168.1.142}"
+POD_CIDR="${POD_CIDR:-10.244.0.0/16}"
 
 # ============================================================
 echo -e "\n${BOLD}╔══════════════════════════════════════════════╗${NC}"

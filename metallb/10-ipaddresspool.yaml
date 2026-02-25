@@ -8,6 +8,11 @@
 # - Plage: 192.168.1.100 - 192.168.1.105 (6 IPs disponibles)
 # - autoAssign: true (les IPs sont assignées automatiquement)
 #
+# À adapter selon cluster.env :
+#   LB_POOL_START=192.168.1.100  → adresse de début de la plage
+#   LB_POOL_END=192.168.1.105    → adresse de fin de la plage
+#   LB_INGRESS_IP=192.168.1.100  → IP assignée à ingress-nginx
+#
 # IMPORTANT: Assurez-vous que ces IPs ne sont pas utilisées par d'autres
 # équipements sur votre réseau (DHCP, machines physiques, etc.)
 # =============================================================================

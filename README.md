@@ -167,14 +167,14 @@ kubectl get events -n algohive --sort-by='.lastTimestamp'
 | `openebs/` | Stockage local persistant OpenEBS v3.5.0 — à installer avant les PVC | [README](openebs/README.md) |
 | `metallb/` | Load Balancer Layer 2 pour IPs externes | [README](metallb/README.md) |
 | `ingress-nginx/` | Controller Ingress NGINX | [README](ingress-nginx/README.md) |
-| `base/` | Namespace algohive | - |
-| `secrets/` | Mots de passe base de données | - |
-| `configmaps/` | Configuration applicative | - |
-| `volumes/` | PersistentVolumeClaims (StorageClass : openebs-hostpath) | - |
-| `deployments/` | Pods applicatifs | - |
-| `services/` | Ingress rules + NetworkPolicies | - |
-| `monitoring/` | Stack Grafana | - |
-| `kubeview/` | Visualisation cluster | - |
+| `base/` | Namespace algohive | [README](base/README.md) |
+| `secrets/` | Mots de passe base de données | [README](secrets/README.md) |
+| `configmaps/` | Configuration applicative | [README](configmaps/README.md) |
+| `volumes/` | PersistentVolumeClaims (StorageClass : openebs-hostpath) | [README](volumes/README.md) |
+| `deployments/` | Pods applicatifs | [README](deployments/README.md) |
+| `services/` | Ingress rules + NetworkPolicies | [README](services/README.md) |
+| `monitoring/` | Stack Grafana | [README](monitoring/README.md) |
+| `kubeview/` | Visualisation cluster | [README](kubeview/README.md) |
 
 ---
 
